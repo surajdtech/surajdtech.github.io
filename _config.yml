@@ -19,7 +19,7 @@ plugins:
 author:
   name: "Suraj Dighe"
   avatar: "/assets/img/profile.jpg"
-  bio: "Senior QA & Data Engineer | AWS, Kinesis/MSK, Databricks, Neo4j | Performance & Cost Optimization"
+  bio: "Data Platform Architect • Real-time & AI"
   location: "Pune, IN"
   links:
     - label: "GitHub"
