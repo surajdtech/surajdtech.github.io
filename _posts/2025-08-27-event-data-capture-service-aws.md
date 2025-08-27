@@ -1,7 +1,7 @@
 ---
 layout: single
-title: "Event Data Capture Service on AWS — From PoC to 4.5K RPS"
-subtitle: "Kinesis for small payloads, MSK Serverless for large ones. Latency-tested, cost-aware, production-ready."
+title: "Designing a Dual‑Path Event Capture Service on AWS (Kinesis + MSK) — Latency Benchmarks & Production Checklist"
+subtitle: "Small messages to Kinesis, large messages to MSK Serverless. One gateway, clean routing, measured performance."
 categories: [aws, streaming, kinesis, msk, eks, fastapi]
 tags: [kinesis, kafka, msk, firehose, eks, lambda, s3, neo4j, flink, fastapi]
 permalink: /aws/event-data-capture-service/
@@ -10,34 +10,31 @@ header:
   overlay_filter: 0.25
   teaser: /assets/img/event-capture-hero.png
 excerpt: |
-  Architecture, code snippets, and real load-test results of a dual-path ingestion service: small messages → Kinesis; large messages → MSK Serverless. Includes EKS FastAPI gateway, IAM-auth Kafka producer, and Firehose to S3.
+  A practical blueprint for an ingestion service that sends small payloads to Kinesis and larger ones to MSK Serverless — fronted by FastAPI on EKS. Includes routing logic, latency methodology, results, and a production checklist.
 ---
 
-> **Why this exists**: Teams needed a single endpoint that smartly routes events without changing client code. We built a dual-path router with strong observability and ruthless focus on latency.
+Teams often want **one ingestion endpoint** that works for a variety of event sizes without forcing client changes. In this post I share a pattern that has worked repeatedly:
+- Route **small messages** to **Kinesis** for simple scaling and cost efficiency.
+- Route **large messages** to **MSK Serverless** (Kafka with IAM auth) for high throughput and relaxed size limits.
+- Put a **FastAPI service on EKS** in front to apply config‑driven routing and emit latency headers for observability.
 
----
-
-## TL;DR
-- **Small payloads** → **Kinesis** (cheap, simple, fan-out to Firehose)
-- **Large payloads** → **MSK Serverless** (Kafka + IAM auth, high throughput)
-- **Gateway**: FastAPI on EKS, with config-driven routing and latency headers
-- **Storage**: S3 via Firehose (Kinesis path) and Kafka Connect/Sink (optional)
-- **Throughput** tested up to **4.5K RPS** with 5 KB messages
-
-![High-level architecture](/assets/img/event-capture-arch.png)
+The goal is **clarity and repeatability**: one service, two output paths, measured performance.
 
 ---
 
-## 1) Architecture (minimum viable)
-- **Clients** → **FastAPI (EKS, NLB)** → Router:
-  - if `large_message=false` → Kinesis PutRecords (batched)
-  - else → Kafka producer (MSK Serverless, SASL/OAUTHBEARER IAM)
-- **Downstream**:  
-  - Kinesis → Firehose → S3 (parquet/csv), optional Athena table  
-  - Kafka → Sink connector or Neo4j ingestion
+## Architecture overview
 
-**Config example (YAML):**
+Clients call a **FastAPI** service exposed via an **NLB**. The service reads a small YAML config and routes each request:
+
+- If `large_message=false` (or below a size threshold) → **Kinesis** using `PutRecords` in batches.
+- Otherwise → **Kafka** → **MSK Serverless** with SASL/OAUTHBEARER (IAM auth).
+
+Downstream:
+- Kinesis → **Firehose** → **S3** (Parquet/CSV), optional Athena table for ad‑hoc queries.
+- Kafka → your preferred sink (connector, consumer app) — optionally **Neo4j** for graph use‑cases.
+
 ```yaml
+# routing-config.yml
 streams:
   - team: rpp
     app: promo-clicks
@@ -48,53 +45,66 @@ routing:
   large_message_threshold_kb: 100
 ```
 
-**Routing snippet (Python/FastAPI):**
+**Routing snippet (FastAPI):**
 ```python
+# pseudo-code sketch
 if payload_kb <= cfg.threshold_kb:
     kinesis.put_records(Records=batch, StreamName=cfg.kinesis)
 else:
     kafka_producer.send(cfg.kafka_topic, value=payload)
 ```
 
+> Tip: keep routing **purely config‑driven** so environments (dev/qa/prod) are just config swaps, not code changes.
+
+![High-level architecture](/assets/img/event-capture-arch.png)
+
 ---
 
-## 2) Latency testing setup
-- **Load injectors**: 2× c6a.2xlarge EC2, Python async client  
-- **RPS ramp**: 2500 → 4500  
-- **Payload**: 5 KB JSON  
-- **Metrics**: network_latency, processing_latency (returned in headers), end-to-end  
+## Latency methodology
 
-**Headers from API:**
+To understand the bottlenecks we measured three things per request:
+
+1. **Network latency** — time from the client sending to reaching the service (reported back as header).
+2. **Processing latency** — time spent by the service doing validation, batching, and the first enqueue call (also a header).
+3. **End‑to‑end** — measured by the load generator from send → HTTP response.
+
+**Headers exposed by the API** (example):
 ```
 X-Network-Latency: 9ms
 X-Processing-Latency: 14ms
 ```
 
----
-
-## 3) Results & learnings
-- Stable up to **~4.5K RPS** on our test bed
-- Keep **18 shards** for headroom on Kinesis; shard math matters
-- Kafka with **IAM auth** works well; cache tokens
-- Enable **HPA** on EKS; watch CPU throttling
-- Batch Kinesis puts (200–500 records) for best $$
+**Load profile**
+- Injectors: **2 × c6a.2xlarge EC2**
+- Ramp: **2500 → 4500 RPS**
+- Payload: **5 KB JSON**
 
 ---
 
-## 4) Production checklist
-- ✅ VPC endpoints for Kinesis/STS  
-- ✅ Retry & DLQ strategy  
-- ✅ Structured logs + request IDs  
-- ✅ S3 partitioning (date/hour/team/app)  
-- ✅ Cost dashboards (shards, Firehose, EKS nodes)  
+## Results and observations
+
+- The system stayed stable up to **~4.5K RPS** in our test bed.
+- **Kinesis** behaved best with **batched** `PutRecords` (200–500 per call).
+- **MSK Serverless** with IAM auth was reliable; re‑use tokens to avoid frequent refresh.
+- With EKS, ensure an **HPA** is in place and watch CPU throttling under the NLB.
+- Shard math matters — we kept **18 shards** for headroom during spikes.
 
 ---
 
-## 5) What’s next
-- Add **API Gateway + Lambda authorizer** in front of NLB  
-- Plug **Flink on Kinesis/MSK** for streaming enrichments  
-- Stream to **Neo4j** to unlock graph features (journey, influence)  
+## Production checklist
+
+- **Networking**: Private subnets, **VPC endpoints** for Kinesis/STS.
+- **Reliability**: Retries with backoff; DLQ strategy for both paths.
+- **Observability**: Structured logs, request IDs, latency headers, dashboards.
+- **Storage layout**: S3 partitioning by `date/hour/team/app`.
+- **Cost hygiene**: Monitor shards, Firehose buffering, and EKS node sizing.
 
 ---
 
-*Repo link and code snippets are coming in a follow-up post.*
+## Where to take it next
+
+- Put **API Gateway + Lambda authorizer** ahead of NLB for auth & throttling.
+- Add **Flink** (Kinesis/MSK) for streaming enrichments.
+- Stream certain topics to **Neo4j** to add graph‑based features (journey, influence).
+
+If you want the full repo with configs and scripts, ping me — I’ll publish it as a companion.
