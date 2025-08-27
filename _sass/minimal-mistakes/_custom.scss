@@ -2,3 +2,14 @@
 .author__content, .author__bio, .author__urls { overflow-x: hidden; }
 .author__bio { white-space: normal; }
 .author__urls a { word-break: break-word; }
+
+
+/* remove the default gray layer */
+.page__hero--overlay:before { background: none !important; }
+
+/* set a site-wide gradient hero */
+.page__hero--overlay,
+.page__hero {
+  background: linear-gradient(180deg, #0F172A 0%, #1D4ED8 100%) !important; /* navy → blue */
+}
+
