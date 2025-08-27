@@ -7,13 +7,15 @@ tags: [kinesis, kafka, msk, firehose, eks, lambda, s3, neo4j, flink, fastapi]
 permalink: /aws/event-data-capture-service/
 
 # REMOVE this block to stop overlaying the big image under the title
-# header:
-#   overlay_image: /assets/img/event-capture-hero.png
-#   overlay_filter: 0.25
-#   teaser: /assets/img/event-capture-hero.png
+header:
+  overlay_image: /assets/img/event-capture-hero.png
+  overlay_filter: 0.25
+  overlay_color: "#0F2A4D"   # pick any hex
+  overlay_filter: 0          # keep text crisp
+  # teaser: /assets/img/event-capture-hero.png
 
 # Keep for social cards / previews only
-image: /assets/img/event-capture-hero.png
+# image: /assets/img/event-capture-hero.png
 
 excerpt: >
   A practical blueprint for an ingestion service that sends small payloads to Kinesis and larger ones to MSK Serverless — fronted by FastAPI on EKS. Includes routing logic, latency methodology, results, and a production checklist.
