@@ -1,17 +1,24 @@
 ---
 layout: single
-title: "Designing a Dual‑Path Event Capture Service on AWS (Kinesis + MSK) — Latency Benchmarks & Production Checklist"
-subtitle: "Small messages to Kinesis, large messages to MSK Serverless. One gateway, clean routing, measured performance."
+title: "Designing a Dual-Path Event Capture Service on AWS (Kinesis + MSK) — Latency Benchmarks & Production Checklist"
+subtitle: "Small messages to Kinesis; large to MSK Serverless. FastAPI gateway on EKS."
 categories: [aws, streaming, kinesis, msk, eks, fastapi]
 tags: [kinesis, kafka, msk, firehose, eks, lambda, s3, neo4j, flink, fastapi]
 permalink: /aws/event-data-capture-service/
-header:
-  overlay_image: /assets/img/event-capture-hero.png
-  overlay_filter: 0.25
-  teaser: /assets/img/event-capture-hero.png
-excerpt: |
+
+# REMOVE this block to stop overlaying the big image under the title
+# header:
+#   overlay_image: /assets/img/event-capture-hero.png
+#   overlay_filter: 0.25
+#   teaser: /assets/img/event-capture-hero.png
+
+# Keep for social cards / previews only
+image: /assets/img/event-capture-hero.png
+
+excerpt: >
   A practical blueprint for an ingestion service that sends small payloads to Kinesis and larger ones to MSK Serverless — fronted by FastAPI on EKS. Includes routing logic, latency methodology, results, and a production checklist.
 ---
+
 
 Teams often want **one ingestion endpoint** that works for a variety of event sizes without forcing client changes. In this post I share a pattern that has worked repeatedly:
 - Route **small messages** to **Kinesis** for simple scaling and cost efficiency.
@@ -108,3 +115,4 @@ X-Processing-Latency: 14ms
 - Stream certain topics to **Neo4j** to add graph‑based features (journey, influence).
 
 If you want the full repo with configs and scripts, ping me — I’ll publish it as a companion.
+
