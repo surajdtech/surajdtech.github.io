@@ -1,17 +1,21 @@
 ---
 layout: single
 title: "Reading the Spark UI Like a Pro — Stages → Tasks → DAG (and How to Spot Skew)"
-subtitle: "A practical, screenshot-ready guide to interpret Spark UI tabs in order, debug shuffles, and fix skew with concrete code & configs."
+subtitle: "Read in the only order that matters during incidents."
 categories: [spark, performance, databricks]
 tags: [spark, spark-ui, tuning, skew, shuffle, databricks, pyspark]
 permalink: /spark/spark-ui-deep-dive/
+
 header:
-  overlay_image: /assets/img/spark-ui-hero.png
-  overlay_filter: 0.2
-  teaser: /assets/img/spark-ui-hero.png
-excerpt: |
-  Stop guessing. This post walks the Spark UI in the order you should read it during incidents: Jobs → Stages → Tasks → SQL/DAG → Storage → Executors → Environment. We’ll diagnose a real skew issue and fix it with partitioning, AQE, and salt keys.
+  overlay_color: "#9D174D"   # magenta (Spark vibe)
+  overlay_filter: 0
+
+# image: /assets/img/spark-ui-hero.png  # optional: keep only for social cards
+
+excerpt: >
+  Stop guessing. This post walks the Spark UI in the order you should read it during incidents: Jobs → Stages → Tasks → SQL/DAG → Storage → Executors → Environment. We diagnose a real skew issue and fix it with partitioning, AQE, and salt keys.
 ---
+
 
 Performance problems in Spark rarely hide. They leave fingerprints all over the **Spark UI** — you just need to read them **in the right order**.
 
