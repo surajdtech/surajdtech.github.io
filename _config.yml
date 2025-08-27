@@ -9,10 +9,11 @@ baseurl: ""
 # Theme (Minimal Mistakes via remote_theme)
 remote_theme: mmistakes/minimal-mistakes@4.26.2
 plugins:
-- jekyll-include-cache
-- jekyll-feed
-- jekyll-sitemap
-- jekyll-seo-tag
+  - jekyll-remote-theme
+  - jekyll-include-cache
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
 
 
 # Author
