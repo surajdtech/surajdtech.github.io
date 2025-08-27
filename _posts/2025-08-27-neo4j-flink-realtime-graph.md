@@ -1,16 +1,22 @@
 ---
 layout: single
-title: "Real‑time Customer‑Journey Graph with Flink + Neo4j (Kinesis/MSK → Events → Graph)"
+title: "Real-time Customer-Journey Graph with Flink + Neo4j (Kinesis/MSK → Events → Graph)"
 categories: [graphs, streaming, neo4j, flink, aws]
 tags: [neo4j, flink, kinesis, msk, databricks, real-time, graph]
 permalink: /graphs/realtime-journey-neo4j-flink/
+
+# ✅ Color-only hero (no image)
 header:
-  overlay_image: /assets/img/neo4j-flink-hero.png
-  overlay_filter: 0.2
-  teaser: /assets/img/neo4j-flink-hero.png
-excerpt: |
-  Build a streaming **journey graph**: ingest clickstream/events from Kinesis/MSK, process with Flink, and upsert to Neo4j for real‑time recommendations and anomaly detection. Includes Cypher and Flink code sketches.
+  overlay_color: "#0E7490"   # teal (Neo4j vibe)
+  overlay_filter: 0
+
+# (optional) social preview only:
+# image: /assets/img/neo4j-flink-hero.png
+
+excerpt: >
+  Build a streaming journey graph: ingest clickstream/events from Kinesis/MSK, process with Flink, and upsert to Neo4j for real-time recommendations and anomaly detection. Includes Cypher and Flink code sketches.
 ---
+
 
 ## Why a journey graph?
 
